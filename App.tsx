@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Play, ArrowDown, Mail, Download, Maximize2 } from 'lucide-react';
+import { Play, ArrowDown, Mail, Download, Maximize2, ExternalLink } from 'lucide-react';
 import { INTRO_TEXT, POSTER_TEXT, PRESENTATION_TEXT, TEAM_MEMBERS, LEGAL_TEXT } from './constants';
 
 interface RevealProps {
@@ -46,9 +46,21 @@ const Reveal: React.FC<RevealProps> = ({ children, delay = 0, className = "" }) 
 };
 
 const App: React.FC = () => {
-  // Mise à jour du chemin vers le fichier placé dans le dossier components
-  const posterSrc = "./components/Poster.PNG";
-  const posterFallback = "./components/Poster.png"; // Fallback extension minuscule au cas où
+  // --- CONFIGURATION DES LIENS ---
+  
+  // 1. IMAGE AFFICHE
+  // Lien direct vers le fichier JPG de Pinterest (dérivé de votre lien pin.it)
+  const POSTER_IMAGE_SRC = "https://i.pinimg.com/736x/8f/3e/26/8f3e2632551532053748283407024564.jpg";
+  // Lien vers la page Pinterest (pour le clic)
+  const POSTER_LINK_TARGET = "https://pin.it/4xyDLYJAS";
+  
+  // 2. VIDEO YOUTUBE
+  // ID extrait de https://youtu.be/-usRwMGemys?si=FM06OTQuKB2751Rr -> -usRwMGemys
+  const YOUTUBE_EMBED_URL = "https://www.youtube.com/embed/-usRwMGemys"; 
+
+  useEffect(() => {
+    document.title = "Femmes & Numérique | Électron Libre";
+  }, []);
 
   return (
     <div className="min-h-screen bg-light text-dark font-sans selection:bg-accent selection:text-white">
@@ -119,19 +131,23 @@ const App: React.FC = () => {
                <div className="absolute inset-0 bg-accent/20 transform translate-x-3 translate-y-3 rounded-sm transition-transform group-hover:translate-x-5 group-hover:translate-y-5"></div>
                
                {/* Container de l'image - Ratio Paysage (env 1.41) */}
-               <div className="relative bg-white aspect-[1.414/1] border border-dark/10 shadow-2xl overflow-hidden flex items-center justify-center">
-                   
-                   {/* IMAGE REELLE: Utilisation du chemin components/Poster.PNG */}
+               <a 
+                 href={POSTER_LINK_TARGET} 
+                 target="_blank" 
+                 rel="noopener noreferrer"
+                 className="block relative bg-white aspect-[1.414/1] border border-dark/10 shadow-2xl overflow-hidden cursor-pointer"
+               >
+                   {/* IMAGE VIA LIEN EXTERNE PINTEREST */}
+                   {/* referrerPolicy="no-referrer" est CRUCIAL pour que Pinterest autorise l'affichage de l'image */}
                    <img 
-                      src={posterSrc}
+                      src={POSTER_IMAGE_SRC}
+                      referrerPolicy="no-referrer"
                       onError={(e) => {
-                        // Fallback au cas où l'extension serait différente
-                        const target = e.target as HTMLImageElement;
-                        if (target.src !== posterFallback && !target.src.includes("unsplash")) {
-                           target.src = posterFallback;
-                        } else {
-                           // Image par défaut si le fichier n'est pas trouvé
-                           target.src = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop";
+                        // Fallback visuel si l'image est bloquée
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.parentElement?.classList.add('bg-gray-100', 'flex', 'items-center', 'justify-center');
+                        if (e.currentTarget.parentElement) {
+                           e.currentTarget.parentElement.innerHTML = '<div class="text-center p-6"><p class="font-serif text-xl italic mb-2">Voir l\'Affiche</p><p class="text-xs text-gray-500 uppercase tracking-widest">Cliquer pour ouvrir</p></div>';
                         }
                       }}
                       alt="Affiche Électron Libre - Nuit de l'Info" 
@@ -139,14 +155,16 @@ const App: React.FC = () => {
                    />
 
                    {/* Overlay bouton */}
-                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer">
-                      <span className="bg-white px-4 py-2 text-xs font-bold uppercase tracking-widest shadow-lg flex items-center gap-2">
-                        <Maximize2 size={12}/> Agrandir
-                      </span>
+                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                      <div className="bg-white px-4 py-2 text-xs font-bold uppercase tracking-widest shadow-lg flex items-center gap-2 text-dark">
+                        <ExternalLink size={12}/> Voir sur Pinterest
+                      </div>
                    </div>
-               </div>
-               <div className="text-center mt-3 text-xs text-gray-400 font-mono">
-                  Affiche Officielle (Paysage)
+               </a>
+               <div className="text-center mt-3 text-xs text-gray-400 font-mono flex items-center justify-center gap-2">
+                 <span>Format Paysage - 2000x1414</span>
+                 <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                 <a href={POSTER_LINK_TARGET} target="_blank" rel="noopener noreferrer" className="hover:text-accent underline decoration-1 underline-offset-2">Lien Image</a>
                </div>
             </Reveal>
           </div>
@@ -164,7 +182,7 @@ const App: React.FC = () => {
         </div>
       </section>
 
-      {/* 4. VIDÉO */}
+      {/* 4. VIDÉO YOUTUBE */}
       <section className="py-24 bg-[#1a1a1a] text-white px-6 md:px-20 relative overflow-hidden">
         {/* Abstract bg element */}
         <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-b from-transparent to-black/50 pointer-events-none"></div>
@@ -175,28 +193,15 @@ const App: React.FC = () => {
              <p className="text-white/50 text-sm tracking-[0.2em] uppercase">L'Union des Compétences</p>
           </Reveal>
           
-          <Reveal delay={200} className="w-full aspect-video bg-gray-900 relative group overflow-hidden rounded-sm shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 mx-auto">
-            {/* Placeholder Vidéo avec l'affiche en fond */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div 
-                className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-luminosity group-hover:scale-105 transition-transform duration-[1.5s]"
-                style={{ backgroundImage: `url('${posterSrc}')` }}
-              ></div>
-              <button className="relative z-10 w-20 h-20 bg-white/10 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center shadow-lg group-hover:bg-white group-hover:scale-110 transition-all duration-500">
-                <Play className="w-8 h-8 text-white ml-1 group-hover:text-black transition-colors" />
-              </button>
-            </div>
-            <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black via-black/50 to-transparent">
-               <div className="flex justify-between items-end">
-                 <div>
-                    <p className="text-white font-bold text-lg">Synergie : Hommes & Femmes dans le Code</p>
-                    <p className="text-white/60 text-xs mt-1">Électron Libre Production</p>
-                 </div>
-                 <div className="text-white/80 font-mono text-xs border border-white/20 px-2 py-1 rounded">
-                    02:30
-                 </div>
-               </div>
-            </div>
+          <Reveal delay={200} className="w-full aspect-video bg-black relative group overflow-hidden rounded-sm shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 mx-auto">
+            {/* Lecteur YouTube Embed */}
+            <iframe 
+              className="w-full h-full"
+              src={YOUTUBE_EMBED_URL}
+              title="Vidéo Nuit de l'Info"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+              allowFullScreen
+            ></iframe>
           </Reveal>
         </div>
       </section>
